@@ -46,7 +46,7 @@ VERILOG_SOURCES += $(PWD)/tb.v
 # UPDATED CONFIGURATION
 # =====================================================================
 # This must perfectly match the module name inside your tb.v
-TOPLEVEL = tb_hardware_anomaly_detection
+TOPLEVEL = tb
 
 # cocotb expects the Python script name (without .py) to be passed in MODULE
 MODULE = test
