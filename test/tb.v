@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
-module tb_hardware_anomaly_detectio;
+module tb;
 
     // ---------------------------------------------------------
     // Signal Declarations
