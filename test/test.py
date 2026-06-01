@@ -38,8 +38,11 @@ async def wait_for_result(dut):
         if (uio_val & 0b00000001) != 0:
             score = int(dut.uo_out.value)
             irq_triggered = (uio_val & 0b00000010) != 0 # Check uio_out[1]
+            
+            # --- THE FIX: Step out of ReadOnly phase before returning! ---
+            await RisingEdge(dut.clk) 
+            
             return score, irq_triggered
-
 
 @cocotb.test()
 async def test_anomaly_detection(dut):
