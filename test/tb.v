@@ -36,7 +36,7 @@ module tb;
     // All actual stimulus and testing is handled by Python (test.py)
     initial begin
         $dumpfile("tb_anomaly_detection.vcd");
-        $dumpvars(0, tb_hardware_anomaly_detection);
+        $dumpvars(0, tb);
         #1;
     end
 
