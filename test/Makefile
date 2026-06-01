@@ -9,8 +9,7 @@ SRC_DIR = $(PWD)/../src
 
 # Assuming your Verilog source file is named project.v
 # If you named it tt_um_hardware_anomaly_detection.v, update this line!
-PROJECT_SOURCES = project.v
-
+PROJECT_SOURCES = tt_um_hardware_anomaly_detection.v
 ifneq ($(GATES),yes)
 
 # RTL simulation:
