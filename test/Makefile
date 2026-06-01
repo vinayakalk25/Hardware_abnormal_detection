@@ -44,3 +44,17 @@ COMPILE_ARGS    += -I$(SRC_DIR)
 VERILOG_SOURCES += $(PWD)/tb.v
 
 # =====================================================================
+# UPDATED CONFIGURATION
+# =====================================================================
+# This must perfectly match the module name inside your tb.v
+TOPLEVEL = tb_hardware_anomaly_detection
+
+# cocotb expects the Python script name (without .py) to be passed in MODULE
+MODULE = test
+
+# (Keeping your original variable here just in case your TT wrapper requires it)
+COCOTB_TEST_MODULES = test
+
+# include cocotb's make rules to take care of the simulator setup.
+# THIS IS THE LINE THAT FIXES THE "NO RULE TO MAKE TARGET CLEAN" ERROR!
+include $(shell cocotb-config --makefiles)/Makefile.sim
