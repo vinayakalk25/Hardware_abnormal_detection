@@ -1,20 +1,35 @@
-<!---
-
-This file is used to generate your project datasheet. Please fill in the information below and delete any unused
-sections.
-
-You can also include images in this folder and reference them in the markdown. Each image must be less than
-512 kb in size, and the combined size of all images must be less than 1 MB.
--->
-
 ## How it works
 
-Explain how your project works
+This project implements a lightweight, ML-based Hardware Anomaly Detection engine designed to analyze incoming V2X (Vehicle-to-Everything) packet data for malicious or anomalous behavior in real time. The architecture is deeply pipelined and operates in six stages:
+
+1.  **SIPO Ingestion (Layer 1):** Incoming data is fed serially (LSB first) into a 64-bit shift register via the `ui_in[0]` pin. The `ui_in[1]` pin acts as a `bit_valid` strobe.
+2.  **Feature Extraction (Layer 2):** Once 64 bits are captured, the core extracts two key 8-bit signed features: **Velocity** (bits 31:24) and **Heading** (bits 23:16).
+3.  **DMA Flow Control (Layer 3):** Extracted features are passed into a pipeline register to decouple the ingestion engine from the math core.
+4.  **ML Inference Core (Layer 4):** A highly optimized MAC (Multiply-Accumulate) unit applies hardcoded model weights to the inputs. It computes: `(12 * Velocity) + (88 * Heading)`.
+5.  **Anomaly Scoring (Layer 5):** The MAC result passes through a ReLU activation function (negative values are clamped to 0) and is evaluated against predefined thresholds:
+    * `< 1024`: **SAFE** (`0x00`)
+    * `>= 1024`: **CAUTION** (`0x55`)
+    * `>= 2048`: **WARNING** (`0xAA`)
+    * `>= 4096`: **CRITICAL/ATTACK** (`0xFF`)
+6.  **Output Endpoints (Layer 6):** The 8-bit threat score is output on `uo_out`. A 1-cycle `done_flag` pulses on `uio_out[0]`, and if the threat is critical, a hardware interrupt `irq_flag` pulses on `uio_out[1]`.
 
 ## How to test
 
-Explain how to use your project
+To test the anomaly detection engine, you will need to simulate a serial data feed:
+
+1.  **Reset:** Assert `rst_n` (active low) to clear all internal shift registers and pipelines.
+2.  **Feed Data:** Drive `ui_in[0]` with your serial data stream (LSB first) while holding `ui_in[1]` (bit_valid) HIGH for exactly 64 clock cycles to simulate a full packet transfer. 
+3.  **Wait for Pipeline:** After the 64th bit, drop `ui_in[1]` LOW and wait a few clock cycles for the data to propagate through the MAC and scoring pipelines.
+4.  **Monitor Outputs:** * Watch `uio_out[0]` for a 1-clock-cycle HIGH pulse. This indicates the evaluation is complete.
+    * At that exact cycle, read the 8-bit threat score on the `uo_out` pins.
+    * Verify if `uio_out[1]` pulsed HIGH, which indicates an interrupt triggered by a CRITICAL score (`0xFF`).
+
+**Example Vectors:**
+* `Velocity = 10`, `Heading = 5` $\rightarrow$ Score should be `0x00` (Safe).
+* `Velocity = 120`, `Heading = 40` $\rightarrow$ Score should be `0xFF` (Critical) and `uio_out[1]` will pulse.
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+* **Microcontroller (e.g., RP2040 / Raspberry Pi Pico):** Required to bit-bang the serial data into the input pins and monitor the output interrupt flag. The standard Tiny Tapeout demo board provides this out of the box.
+* **(Optional) Logic Analyzer:** To visualize the serial ingestion and the 1-cycle `done_flag` and `irq_flag` pulses.
+* **(Optional) 8x LEDs:** Connected to `uo_out[7:0]` to provide a visual representation of the threat level.
